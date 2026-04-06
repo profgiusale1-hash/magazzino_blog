@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Gestione Magazzino Giuseppe</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; max-width: 800px; margin: auto; }
+        label { font-weight: bold; display: block; margin-top: 10px; font-size: 0.9em; color: #444; }
+        input, select, button { margin: 5px 0 15px 0; padding: 12px; width: 100%; display: block; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; font-size: 1.1em; margin-top: 10px; }
+        button:hover { background: #219150; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #2c3e50; color: white; text-transform: uppercase; font-size: 0.8em; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+   
+<a href="pagina2.html" style="padding:10px; display:block; text-align:right;">Vai ai Progetti →</a>
+    
+    <h1>Magazzino Giuseppe</h1>
+
+    <div id="form">
+        <label>Tipo Materiale</label>
+        <input type="text" id="tipo" placeholder="es. PLA, ABS">
+        
+        <label>Colore</label>
+        <input type="text" id="colore" placeholder="es. Rosso Corsa">
+
+        <label>Data Inizio (Colonna C)</label>
+        <input type="date" id="inizio">
+
+        <label>Data Fine (Colonna D)</label>
+        <input type="date" id="fine">
+
+        <label>Fornitore</label>
+        <input type="text" id="fornitore" placeholder="Fornitore">
+
+        <label>Prezzo (€)</label>
+        <input type="number" id="prezzo" placeholder="0.00" step="0.01">
+        
+        <button onclick="inviaDati()">SALVA NEL DATABASE</button>
+    </div>
+
+    <hr>
+
+    <table id="tabella">
+        <thead><tr id="testata"></tr></thead>
+        <tbody id="corpo"></tbody>
+    </table>
+
+<script>
+    const URL_GOOGLE = "https://script.google.com/macros/s/AKfycbzZTC8KE7SxmJbLeL9ec8eFeGXmTH4sDgcRLc01Q4VwBXZc6uncLGVx_pBXkRfA8HKB/exec";
+
+    async function leggiDati() {
+        try {
+            const res = await fetch(URL_GOOGLE);
+            const dati = await res.json();
+            
+            if (dati.length > 0) {
+                const colonne = Object.keys(dati[0]);
+                document.getElementById('testata').innerHTML = colonne.map(c => `<th>${c}</th>`).join('');
+                document.getElementById('corpo').innerHTML = dati.map(riga => 
+                    `<tr>${colonne.map(c => `<td>${riga[c] || ""}</td>`).join('')}</tr>`
+                ).join('');
+            }
+        } catch (errore) {
+            console.error("Errore nel caricamento:", errore);
+        }
+    }
+
+    async function inviaDati() {
+        // RACCOLTA DATI INCLUSO LE DATE
+        const pacchetto = {
+            tipo: document.getElementById('tipo').value,
+            colore: document.getElementById('colore').value,
+            inizio: document.getElementById('inizio').value, // Prende la data dal calendario
+            fine: document.getElementById('fine').value,     // Prende la data dal calendario
+            fornitore: document.getElementById('fornitore').value,
+            prezzo: document.getElementById('prezzo').value
+        };
+
+        if (!pacchetto.tipo || !pacchetto.colore || !pacchetto.inizio) {
+            alert("Compila i campi obbligatori (Tipo, Colore e Data Inizio)!");
+            return;
+        }
+
+        const tasto = document.querySelector("button");
+        tasto.innerText = "Salvataggio...";
+        tasto.disabled = true;
+
+        try {
+            await fetch(URL_GOOGLE, { 
+                method: "POST", 
+                mode: "no-cors", 
+                body: JSON.stringify(pacchetto) 
+            });
+
+            alert("Dati inviati con successo!");
+            location.reload(); 
+        } catch (e) {
+            alert("Errore nell'invio.");
+            tasto.disabled = false;
+            tasto.innerText = "SALVA NEL DATABASE";
+        }
+    }
+
+    leggiDati();
+</script>
+</body>
+</html>
